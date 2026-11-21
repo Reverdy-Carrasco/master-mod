@@ -1,0 +1,56 @@
+{
+ "schema": 2,
+ "id": "op1f-1.7.3-example-master-mod",
+ "device": "OP-1 Field",
+ "firmware_version": "1.7.3+0",
+ "cpu": "bf703",
+ "about": [
+  "The fourteen places where the example pack `master-mod` changes OS 1.7.3+0 of the OP-1 Field. A single-pack port of the static LDR patch `master_final_v2`, minus the threshold change: encoder remap (Q2), Shift-link redirect (Q4 v3), and L/R post-makeup. No byte of the firmware is in this file.",
+  "It has the form of profiles/op1f-1.7.3.json. Sums below come from tools/place_sum.py against the stock os.ldr of SHA-256 d134eb1a...fad0ec.",
+  "module_base and reserved_bytes are the room for our code, as the main profile names it: the pack is linked for the room behind the loader."
+ ],
+ "stock_sha256": "d134eb1ac7ad88e8370d988329cd5d7419f016005b1d269034f9cf7166fad0ec",
+ "stock_bytes": 2079016,
+ "module_base": "0x8d2e4234",
+ "reserved_bytes": 2097152,
+ "patches": [
+  { "address": "0x8c0bb5d4", "length": 8, "sum": "0xb72f20ce", "group": "master-mod", "name": "MasterController Shift-link dispatch: `R0=4; CC=R7==R0; IF CC JUMP 0x8c0bb5e0; R0=5`. Our routine routes R7 in {6,7} to the Shift-link handler and every other R7 to the function's exit." },
+  { "address": "0x8c0bb63a", "length": 8, "sum": "0xf7f951d4", "group": "master-mod", "name": "MasterController single-encoder dispatch: start of `R1=6; CC=R4==0; LDI32 R0=0x11b01e8c`. Our routine inserts `BITTGL R7, 1` (bleu<->gris, ocre<->rouge) then runs the stock twelve bytes through the trampoline." },
+  { "address": "0x11a0853c", "length": 8, "sum": "0xda1407d6", "group": "master-mod", "name": "Drive stage 1 pre-gain: `R1 = R5 * R1 (T); R0 = R7 - R0 (S)`." },
+  { "address": "0x11a085fc", "length": 8, "sum": "0x9abb922c", "group": "master-mod", "name": "Drive stage 2 pre-gain bundle: `R4 = R6 * R5 (T) || [FP - 0x10] = R3 || R5 = [FP - 0x4]`." },
+  { "address": "0x11a086da", "length": 8, "sum": "0x6a53fd01", "group": "master-mod", "name": "Drive stage 3 pre-gain bundle: `R2 = R0 * R2 (T) || R0 = [FP - 0x10] || NOP`." },
+  { "address": "0x11a087ca", "length": 8, "sum": "0x10f5d4e8", "group": "master-mod", "name": "Drive stage 4 pre-gain bundle: `R5 = R2 * R4 (T) || R4 = [SP + 0x34] || NOP`." },
+  { "address": "0x11a085b2", "length": 8, "sum": "0xbceddcc8", "group": "master-mod", "name": "Drive stage 1 output-shape `LDI32 R3 = 0x40000000`." },
+  { "address": "0x11a08676", "length": 8, "sum": "0xbceddcc8", "group": "master-mod", "name": "Drive stage 2 output-shape `LDI32 R3 = 0x40000000`." },
+  { "address": "0x11a0873c", "length": 8, "sum": "0xbceddcc8", "group": "master-mod", "name": "Drive stage 3 output-shape `LDI32 R3 = 0x40000000`." },
+  { "address": "0x11a0883c", "length": 8, "sum": "0x7a82d54f", "group": "master-mod", "name": "Drive stage 4 output-shape `LDI32 R5 = 0x40000000`." },
+  { "address": "0x11a085ba", "length": 8, "sum": "0x22478061", "group": "master-mod", "name": "Drive stage 1 output-shape short: `R3 = R5 * R3 (T); R6 = R4 + R6 (S)`." },
+  { "address": "0x11a0884e", "length": 8, "sum": "0x318ff028", "group": "master-mod", "name": "Drive stage 4 output-shape short: `R5 = R3 * R5 (T); R1 = R6 + R1 (S)`." },
+  { "address": "0x11a08688", "length": 8, "sum": "0x6c84efd9", "group": "master-mod", "name": "Drive stage 2 output-shape (straddled bundle): `R3 = R2 * R3 (T); R1 = R4 + R1 (S) || R4 = [FP + 0x8] || NOP`. Our routine jumps to place + 12." },
+  { "address": "0x11a0874c", "length": 8, "sum": "0x43df8e7b", "group": "master-mod", "name": "Drive stage 3 output-shape (straddled bundle): `R3 = R4 * R3 (T); R2 = R0 << 1 (S) || R0 = [FP + 0xc] || NOP`. Our routine jumps to place + 12." }
+ ],
+ "image": [],
+ "tables": [
+  {
+   "file": "examples/master-mod/master-mod_table.s",
+   "part": "master-mod",
+   "symbol": "op1f_boot_table",
+   "entries": [
+    { "address": "0x8c0bb5d4", "form": "jump", "target": "op1f_master_shift_dispatch", "does": "Reroutes the Shift-link dispatch. Sends R7 in {6,7} to the Shift-link handler at 0x8c0bb5e0 (Shift+gris or Shift+rouge after the Q2 remap -> L+R link), and every other R7 (including the stock {4,5} which were Shift+bleu/ocre) to the function's exit at 0x8c0bb354. Preserves R7." },
+    { "address": "0x8c0bb63a", "form": "jump", "target": "op1f_master_bittgl", "room": "op1f_master_bittgl_room", "copies": 12, "sum": "0xb29c0fe7", "does": "Toggles bit 1 of R7 (BITTGL R7,1) so that in the Master page the encoder indices are remapped bleu<->gris and ocre<->rouge, then goes on through a trampoline of twelve bytes (R1=6; CC=R4==0; LDI32 R0=0x11b01e8c), landing behind the stock jump at 0x8c0bb646." },
+    { "address": "0x11a0853c", "form": "jump", "target": "op1f_master_pre_1", "does": "Pre-gain: replaces the first operand of the drive-1 mul by R7 (~1.0) to neutralise the L?? pre-gain; keeps the subtract that follows." },
+    { "address": "0x11a085fc", "form": "jump", "target": "op1f_master_pre_2", "does": "Pre-gain: replaces the first operand of the drive-2 mul bundle by R7 to neutralise the L?? pre-gain; keeps the two parallel slaves." },
+    { "address": "0x11a086da", "form": "jump", "target": "op1f_master_pre_3", "does": "Pre-gain: replaces the first operand of the drive-3 mul bundle by R7 to neutralise the R?? pre-gain; keeps the two parallel slaves." },
+    { "address": "0x11a087ca", "form": "jump", "target": "op1f_master_pre_4", "does": "Pre-gain: replaces the first operand of the drive-4 mul bundle by R7 to neutralise the R?? pre-gain; keeps the two parallel slaves." },
+    { "address": "0x11a085b2", "form": "jump", "target": "op1f_master_post_ldi_1", "does": "Output shape: replaces the drive-1 `LDI32 R3 = 0x40000000` by `R3 = [FP - 0x10]; R3 = R5 * R3 (T); NOP` so the post-compression stage multiplies by L?? instead of the constant 0.5." },
+    { "address": "0x11a08676", "form": "jump", "target": "op1f_master_post_ldi_2", "does": "Output shape: replaces the drive-2 `LDI32 R3 = 0x40000000` by `R2 = R2 * R6 (T); R3 = R2 >>> 1`." },
+    { "address": "0x11a0873c", "form": "jump", "target": "op1f_master_post_ldi_3", "does": "Output shape: replaces the drive-3 `LDI32 R3 = 0x40000000` by `R3 = [FP - 0xc]; R3 = R4 * R3 (T); NOP` so the stage multiplies by R?? instead of the constant 0.5." },
+    { "address": "0x11a0883c", "form": "jump", "target": "op1f_master_post_ldi_4", "does": "Output shape: replaces the drive-4 `LDI32 R5 = 0x40000000` by `R3 = R3 * R2 (T); R5 = R3 >>> 1`." },
+    { "address": "0x11a085ba", "form": "jump", "target": "op1f_master_post_s_1", "does": "Output shape (short): replaces the drive-1 `R3 = R5 * R3 (T)` by `R5 = R3 >>> 1`; keeps the `R6 = R4 + R6 (S)` behind it." },
+    { "address": "0x11a0884e", "form": "jump", "target": "op1f_master_post_s_2", "does": "Output shape (short): replaces the drive-4 `R5 = R3 * R5 (T)` by two NOPs (the LDI replacement at 0x11a0883c already does the work); keeps the `R1 = R6 + R1 (S)` behind it." },
+    { "address": "0x11a08688", "form": "jump", "target": "op1f_master_post_x_1", "does": "Output shape (straddled): replaces the drive-2 `R3 = R2 * R3 (T)` by two NOPs, keeps the stock parallel bundle behind it, then jumps to place + 12." },
+    { "address": "0x11a0874c", "form": "jump", "target": "op1f_master_post_x_2", "does": "Output shape (straddled): replaces the drive-3 `R3 = R4 * R3 (T)` by `R4 = R3 >>> 1`, keeps the stock parallel bundle behind it, then jumps to place + 12." }
+   ]
+  }
+ ]
+}

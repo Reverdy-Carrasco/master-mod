@@ -1,0 +1,30 @@
+{
+  "about": "master-output: port of the static LDR patch `master_final_v2` to a single open-field pack, with a custom master.svg carried as a picture. Fourteen places of the firmware (Master-page encoder remap + Shift-link, L/R post-makeup) plus the matching display. Note: the ???12 dBFS threshold change of master_final_v2 has been dropped since v2, the four drive stages now keep their stock ???6 dBFS threshold.",
+  "name": "master mod",
+  "version": 1,
+  "interface": 1,
+  "build": "build_m1_master_mod",
+  "sources": [
+    "examples/master-mod/master-mod.s", "examples/master-mod/master-mod.cpp",
+    "examples/master-mod/master-mod_table.s",
+    "examples/master-mod/master-mod_pictures.s",
+    "examples/master-mod/master-mod_card.s"
+  ],
+  "works_with": [{"name": "sidechain", "interface": 2, "needed": false}],
+  "serves": [],
+  "exports": [],
+  "pictures": [
+    { "name": "master.svg",     "file": "examples/master-mod/master.svg.make" },
+    { "name": "signalflow.svg", "file": "examples/master-mod/signalflow.svg.make" }
+  ],
+  "card": {
+    "level": 1,
+    "frame": "master_mod_frame",
+    "pick": "master_mod_pick",
+    "pictures": true
+  },
+  "marks": [],
+  "named": true,
+  "sum": true,
+  "path": null
+}
